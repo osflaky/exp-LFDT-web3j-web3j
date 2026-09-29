@@ -1,0 +1,105 @@
+plugins {
+    id 'java'
+    id 'idea'
+    id 'maven-publish'
+    id 'org.sonarqube' version '5.0.0.4638'
+    id 'jacoco'
+    id 'com.diffplug.spotless' version '7.2.1'
+    id 'io.github.gradle-nexus.publish-plugin' version '2.0.0'
+    id 'de.undercouch.download' version '5.6.0'
+    id 'org.ajoberstar.git-publish' version '5.0.0'
+    id 'org.jreleaser' version '1.22.0'
+}
+
+
+
+ext {
+    bouncycastleVersion = '1.80'
+    jacksonVersion = '3.1.0'
+    jacksonAnnotationsVersion = '2.17.1'
+    javaPoetVersion = '1.13.0'
+    kotlinVersion = '1.9.24'
+    kotlinPoetVersion = '1.16.0'
+    jnr_unixsocketVersion = '0.38.22'
+    okhttpVersion = '4.12.0'
+    rxjavaVersion = '2.2.21'
+    slf4jVersion = '2.0.13'
+    javaWebSocketVersion = '1.5.6'
+    picocliVersion = '4.7.6'
+    ensAdraffyVersion = '0.2.0'
+    kzg4844Version = '2.1.6'
+    awsSdkVersion = '2.27.24'
+    tuweniVersion = '2.7.0'
+    // test dependencies
+    equalsverifierVersion = '3.16.1'
+    junitVersion = '6.0.2'
+    web3jUnitVersion = '5.0.3'
+    junitBenchmarkVersion = '0.7.2'
+    logbackVersion = '1.5.6'
+    mockitoJunitVersion = '3.1.0'
+    junitPlatformLauncherVersion = '1.5.2'
+}
+
+
+description 'Web3j base project.'
+
+[
+    'jacoco',
+    'java',
+    'javadoc',
+    'repositories',
+    'spotless'
+].each { buildScript ->
+    download.run {
+        src "https://raw.githubusercontent.com/LFDT-web3j/web3j-build-tools/main/gradle/$buildScript/build.gradle"
+        dest "$rootDir/gradle/$buildScript/build.gradle"
+        overwrite false
+        quiet true
+        onlyIfModified true
+    }
+}
+
+allprojects {
+    apply {
+        [
+            'java',
+            'javadoc',
+            'repositories',
+            'spotless'
+        ].each { buildScript ->
+            from("$rootDir/gradle/$buildScript/build.gradle")
+        }
+    }
+
+    tasks.withType(Test).configureEach {
+        useJUnitPlatform()
+        reports.html.outputLocation.set(layout.buildDirectory.dir("reports/${name}"))
+    }
+
+    dependencies {
+        testImplementation "org.junit.jupiter:junit-jupiter:$junitVersion"
+        testImplementation "org.mockito:mockito-junit-jupiter:$mockitoJunitVersion"
+        testImplementation "org.junit.platform:junit-platform-launcher"
+
+        configurations.all {
+            resolutionStrategy {
+                force(group: "org.jetbrains.kotlin", name: "kotlin-reflect", version: kotlinVersion)
+                force(group: "org.jetbrains.kotlin", name: "kotlin-stdlib", version: kotlinVersion)
+                force(group: "org.jetbrains.kotlin", name: "kotlin-stdlib-common", version: kotlinVersion)
+                force(group: "org.jetbrains.kotlin", name: "kotlin-stdlib-jdk7", version: kotlinVersion)
+                force(group: "org.jetbrains.kotlin", name: "kotlin-stdlib-jdk8", version: kotlinVersion)
+                force(group: 'tools.jackson.core', name: 'jackson-core', version: jacksonVersion)
+                force(group: 'tools.jackson.core', name: 'jackson-databind', version: jacksonVersion)
+                force(group: 'tools.jackson.core', name: 'jackson-annotations', version: jacksonAnnotationsVersion)
+                force(group: 'org.slf4j', name: 'slf4j-api', version: slf4jVersion)
+            }
+        }
+    }
+
+    if (project.name != 'integration-tests' && project.name != 'web3j') {
+        apply from: "$rootDir/gradle/publish/build.gradle"
+    }
+}
+configure(subprojects.findAll { it.name != 'integration-tests' }) {
+    apply from: "$rootDir/gradle/jacoco/build.gradle"
+}

@@ -1,0 +1,8 @@
+
+description 'Parity JSON-RPC API'
+
+dependencies {
+    implementation project(':core')
+    testImplementation project(path: ':core', configuration: 'testArtifacts'),
+    "nl.jqno.equalsverifier:equalsverifier:$equalsverifierVersion"
+}

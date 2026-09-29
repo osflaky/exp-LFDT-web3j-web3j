@@ -1,0 +1,7 @@
+
+description 'Geth JSON-RPC API'
+
+dependencies {
+    implementation project(':core')
+    testImplementation project(path: ':core', configuration: 'testArtifacts')
+}

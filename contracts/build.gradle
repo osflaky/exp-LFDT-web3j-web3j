@@ -1,0 +1,7 @@
+
+description 'web3j support for Ethereum Improvement Proposals (EIP\'s)'
+
+dependencies {
+    implementation project(':core')
+    testImplementation project(path: ':core', configuration: 'testArtifacts')
+}

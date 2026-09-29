@@ -1,0 +1,20 @@
+plugins {
+    id 'java-library'
+}
+
+description 'web3j Ethereum crypto library'
+
+dependencies {
+    api project(':abi'),
+            project(':rlp'),
+            project(':utils'),
+            "org.slf4j:slf4j-api:$slf4jVersion",
+            "tools.jackson.core:jackson-databind:$jacksonVersion",
+            "io.consensys.protocols:jc-kzg-4844:$kzg4844Version"
+    implementation("io.consensys.tuweni:tuweni-bytes:$tuweniVersion")
+    implementation("io.consensys.tuweni:tuweni-units:$tuweniVersion")
+}
+
+configurations { testArtifacts.extendsFrom testRuntime }
+
+artifacts { testArtifacts testsJar }

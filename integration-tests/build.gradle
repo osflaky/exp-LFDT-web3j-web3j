@@ -1,0 +1,69 @@
+description 'web3j integration tests'
+
+
+repositories {
+    maven { url "https://hyperledger.jfrog.io/artifactory/besu-maven/" }
+    maven { url "https://artifacts.consensys.net/public/maven/maven/" }
+    maven { url "https://splunk.jfrog.io/splunk/ext-releases-local" }
+}
+ext {
+    besuDepVersion = '25.10.0'
+    besuNativeDepVersion = '1.4.0'
+}
+
+def withoutAbi = { exclude group: 'org.web3j', module: 'abi' }
+
+dependencies {
+    testImplementation project(':core'),
+            project(':besu'),
+            project(':parity'),
+            project(':geth'),
+            project(':codegen')
+    testImplementation "ch.qos.logback:logback-core:$logbackVersion"
+    testImplementation "ch.qos.logback:logback-classic:$logbackVersion"
+    testImplementation "com.carrotsearch:junit-benchmarks:$junitBenchmarkVersion"
+    testImplementation("org.web3j:web3j-unit:$web3jUnitVersion") {
+        // We dont want to pull the web3j version from unit
+        exclude group: 'org.web3j'
+    }
+    testImplementation "org.hyperledger.besu:besu-plugin-api:$besuDepVersion",withoutAbi
+    testImplementation "org.hyperledger.besu.internal:besu-app:$besuDepVersion",withoutAbi
+    testImplementation "org.hyperledger.besu.internal:besu-ethereum-api:$besuDepVersion",withoutAbi
+    testImplementation "org.hyperledger.besu.internal:besu-config:$besuDepVersion",withoutAbi
+    testImplementation "org.hyperledger.besu.internal:besu-ethereum-core:$besuDepVersion",withoutAbi
+    testImplementation "org.hyperledger.besu.internal:besu-crypto-services:$besuDepVersion",withoutAbi
+    testImplementation "org.hyperledger.besu.internal:besu-ethereum-rlp:$besuDepVersion",withoutAbi
+    testImplementation "org.hyperledger.besu.internal:besu-services-kvstore:$besuDepVersion",withoutAbi
+    testImplementation "org.hyperledger.besu.internal:besu-metrics-core:$besuDepVersion",withoutAbi
+    testImplementation "org.hyperledger.besu.internal:besu-ethereum-trie:$besuDepVersion",withoutAbi
+    testImplementation "org.hyperledger.besu.internal:besu-util:$besuDepVersion",withoutAbi
+    testImplementation "org.hyperledger.besu:gnark:$besuNativeDepVersion",withoutAbi
+    testImplementation "org.hyperledger.besu:secp256k1:$besuNativeDepVersion",withoutAbi
+}
+
+
+tasks.withType(Test) {
+    useJUnitPlatform()
+    systemProperties = [
+        'junit.jupiter.extensions.autodetection.enabled': 'true',
+        'junit.jupiter.testinstance.lifecycle.default'  : 'per_class'
+    ]
+}
+
+sourceSets {
+    test {
+        java {
+            srcDir "$rootDir/codegen/build/resources/test/java"
+        }
+    }
+}
+
+// we don't want integration tests to run by default
+test {
+    enabled = project.hasProperty('integration-tests') ?
+            project.getProperty('integration-tests') : false
+    dependsOn project(':codegen').getTasksByName('test', false)
+}
+compileTestJava {
+    dependsOn project(':codegen').getTasksByName("testClasses", false)
+}
